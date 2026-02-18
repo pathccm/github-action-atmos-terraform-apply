@@ -190,6 +190,17 @@ integrations:
       ...
 ```  
 
+### Plan Diff mode
+
+The action provides a `plan-diff` mode that compares the newly generated plan against the previously stored plan and fails the workflow if any differences are detected.
+
+To enable plan diff mode, set the `plan-diff` input to `true`.
+
+> [!IMPORTANT]
+> When plan-diff is disabled, the action will apply the stored plan without re-validating it.
+> This may result in unintended changes if the underlying infrastructure has been modified between the plan and apply steps.
+> Additionally, stored plans are single-use: even if an apply operation fails for any reason, the plan becomes outdated and cannot be reused.
+
 ### Workflow example
 
 In this example, the action is triggered when certain events occur, such as a manual workflow dispatch or the opening, synchronization, or reopening of a pull request, specifically on the main branch. It specifies specific permissions related to assuming roles in AWS. Within the "apply" job, the "component" and "stack" are hardcoded (`foobar` and `plat-ue2-sandbox`). In practice, these are usually derived from another action. 
@@ -569,7 +580,7 @@ All other trademarks referenced herein are the property of their respective owne
 
 
 ---
-Copyright © 2017-2025 [Cloud Posse, LLC](https://cpco.io/copyright)
+Copyright © 2017-2026 [Cloud Posse, LLC](https://cpco.io/copyright)
 
 
 <a href="https://cloudposse.com/readme/footer/link?utm_source=github&utm_medium=readme&utm_campaign=cloudposse/github-action-atmos-terraform-apply&utm_content=readme_footer_link"><img alt="README footer" src="https://cloudposse.com/readme/footer/img"/></a>
