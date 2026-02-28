@@ -393,7 +393,7 @@ runs:
           -var "logoImage:${{ inputs.branding-logo-image }}" \
           -var "logoUrl:${{ inputs.branding-logo-url }}" \
           --output "${GITHUB_WORKSPACE}/atmos-plan-summary.md" \
-          --log-level $([[ "${{ inputs.debug }}" == "true" ]] && echo "DEBUG" || echo "INFO") \
+          --log-level $([[ "${{ inputs.debug }}" == "true" ]] && echo "debug" || echo "info") \
           apply -- \
             atmos terraform plan ${{ inputs.component }} \
             --stack ${{ inputs.stack }} \
@@ -553,7 +553,7 @@ runs:
           -var "logoImage:${{ inputs.branding-logo-image }}" \
           -var "logoUrl:${{ inputs.branding-logo-url }}" \
           --output "${GITHUB_WORKSPACE}/atmos-apply-summary.md" \
-          --log-level $([[ "${{ inputs.debug }}" == "true" ]] && echo "DEBUG" || echo "INFO") \
+          --log-level $([[ "${{ inputs.debug }}" == "true" ]] && echo "debug" || echo "info") \
           apply -- \
             atmos terraform deploy ${{ inputs.component }} \
             --stack ${{ inputs.stack }} \
