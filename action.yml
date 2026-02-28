@@ -1,9 +1,9 @@
-name: 'GitHub Action Atmos Terraform Apply'
-description: 'GitHub Action Atmos Terraform Apply'
+name: "GitHub Action Atmos Terraform Apply"
+description: "GitHub Action Atmos Terraform Apply"
 author: hello@cloudposse.com
 branding:
-  icon: 'server'
-  color: 'white'
+  icon: "server"
+  color: "white"
 inputs:
   component:
     description: "The name of the component to apply."
@@ -18,7 +18,7 @@ inputs:
   skip-checkout:
     description: "Disable actions/checkout. Useful for when the checkout happens in a previous step and file are modified outside of git through other actions"
     required: false
-    default: 'false'
+    default: "false"
   atmos-version:
     description: The version of atmos to install
     required: false
@@ -39,7 +39,7 @@ inputs:
     default: "https://cloudposse.com/"
   debug:
     description: "Enable action debug mode. Default: 'false'"
-    default: 'false'
+    default: "false"
     required: false
   token:
     description:
@@ -50,11 +50,11 @@ inputs:
   plan-storage:
     description: "Enable plan storage. Default: 'true'. Set to 'false' to disable plan storage."
     required: false
-    default: 'true'
+    default: "true"
   skip-plandiff:
     description: "Skip plan diff validation. Default: 'false'. Set to 'true' to skip plan prepare and diff validation."
     required: false
-    default: 'false'
+    default: "false"
   identity:
     description: Atmos auth identity
     required: false
@@ -68,13 +68,13 @@ runs:
   using: "composite"
   steps:
     - name: Install Node
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
-        node-version: 20
+        node-version: 24
 
     - name: Checkout
       if: ${{ inputs.skip-checkout != 'true' }}
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set atmos cli config path vars
       shell: bash
@@ -95,8 +95,8 @@ runs:
       with:
         # Here we do not process-templates because that requires terraform. Which we install after fetching the version
         # processing templates here can cause an issue where cached terraform versions conflict with the version we want to install
-        process-templates: 'false'
-        process-functions: 'false'
+        process-templates: "false"
+        process-functions: "false"
         settings: |
           - component: ${{ inputs.component }}
             stack: ${{ inputs.stack }}
@@ -185,7 +185,7 @@ runs:
 
     - name: Install Terraform
       if: ${{ fromJson(steps.atmos-settings.outputs.settings).terraform-version != '' && fromJson(steps.atmos-settings.outputs.settings).terraform-version != 'null' }}
-      uses: hashicorp/setup-terraform@v3
+      uses: hashicorp/setup-terraform@v4
       with:
         terraform_version: ${{ fromJson(steps.atmos-settings.outputs.settings).terraform-version }}
         terraform_wrapper: false
@@ -195,18 +195,19 @@ runs:
       with:
         cache: true
         config: |-
-          opentofu/opentofu: 
+          opentofu/opentofu:
             tag: ${{ startsWith(fromJson(steps.atmos-settings.outputs.settings).opentofu-version, 'v') && fromJson(steps.atmos-settings.outputs.settings).opentofu-version || format('v{0}', fromJson(steps.atmos-settings.outputs.settings).opentofu-version) }}
             skip: ${{ fromJson(steps.atmos-settings.outputs.settings).opentofu-version == '' || fromJson(steps.atmos-settings.outputs.settings).opentofu-version == 'null' }}
-          suzuki-shunsuke/tfcmt: v4.14.0
-          terraform-docs/terraform-docs: v0.20.0
+          suzuki-shunsuke/tfcmt: v4.14.15
+          terraform-docs/terraform-docs: v0.21.0
 
     - name: Configure Plan AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      if: ${{ fromJson(steps.atmos-settings.outputs.settings).aws-region != '' &&
-          fromJson(steps.atmos-settings.outputs.settings).aws-region != 'null' &&
-          fromJson(steps.atmos-settings.outputs.settings).terraform-apply-role != '' &&
-          fromJson(steps.atmos-settings.outputs.settings).terraform-apply-role != 'null' }}
+      uses: aws-actions/configure-aws-credentials@v6
+      if:
+        ${{ fromJson(steps.atmos-settings.outputs.settings).aws-region != '' &&
+        fromJson(steps.atmos-settings.outputs.settings).aws-region != 'null' &&
+        fromJson(steps.atmos-settings.outputs.settings).terraform-apply-role != '' &&
+        fromJson(steps.atmos-settings.outputs.settings).terraform-apply-role != 'null' }}
       with:
         aws-region: ${{ fromJson(steps.atmos-settings.outputs.settings).aws-region }}
         role-to-assume: ${{ fromJson(steps.atmos-settings.outputs.settings).terraform-apply-role }}
@@ -233,7 +234,7 @@ runs:
       if: env.ACTIONS_ENABLED == 'true'
       shell: bash
       run: |-
-        # Set ATMOS_BASE_PATH allow `cloudposse/utils` provider to read atmos config from the correct path 
+        # Set ATMOS_BASE_PATH allow `cloudposse/utils` provider to read atmos config from the correct path
         ATMOS_BASE_PATH="${{ fromJson(steps.atmos-settings.outputs.settings).base-path }}"
         echo "ATMOS_BASE_PATH=$(realpath ${ATMOS_BASE_PATH:-./})" >> $GITHUB_ENV
 
@@ -273,10 +274,11 @@ runs:
     # This prevents plan storage credentials from interfering with Atmos auth.
     - name: Configure Plan Storage AWS Credentials
       id: plan-storage-credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      if: ${{ ( fromJson(steps.atmos-settings.outputs.settings).plan-repository-type == 's3' ||
-                fromJson(steps.atmos-settings.outputs.settings).plan-repository-type == ''  ||
-                fromJson(steps.atmos-settings.outputs.settings).plan-repository-type == 'null' ) &&
+      uses: aws-actions/configure-aws-credentials@v6
+      if:
+        ${{ ( fromJson(steps.atmos-settings.outputs.settings).plan-repository-type == 's3' ||
+        fromJson(steps.atmos-settings.outputs.settings).plan-repository-type == ''  ||
+        fromJson(steps.atmos-settings.outputs.settings).plan-repository-type == 'null' ) &&
         env.ACTIONS_ENABLED == 'true' &&
         inputs.plan-storage == 'true' &&
         fromJson(steps.atmos-settings.outputs.settings).aws-region != '' &&
@@ -293,7 +295,7 @@ runs:
 
     - name: Retrieve Plan
       if: ${{ env.ACTIONS_ENABLED == 'true' && inputs.plan-storage == 'true'}}
-      uses: cloudposse/github-action-terraform-plan-storage@v1
+      uses: pathccm/github-action-terraform-plan-storage@main
       continue-on-error: true
       env:
         AWS_ACCESS_KEY_ID: ${{ steps.plan-storage-credentials.outputs.aws-access-key-id }}
@@ -318,7 +320,7 @@ runs:
 
     - name: Retrieve Lockfile
       if: ${{ env.ACTIONS_ENABLED == 'true' && inputs.plan-storage == 'true'}}
-      uses: cloudposse/github-action-terraform-plan-storage@v1
+      uses: pathccm/github-action-terraform-plan-storage@main
       continue-on-error: true
       env:
         AWS_ACCESS_KEY_ID: ${{ steps.plan-storage-credentials.outputs.aws-access-key-id }}
@@ -342,8 +344,9 @@ runs:
         bucketName: ${{ fromJson(steps.atmos-settings.outputs.settings).terraform-state-bucket }}
 
     - name: Configure Apply AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      if: ${{ fromJson(steps.atmos-settings.outputs.settings).aws-region != '' &&
+      uses: aws-actions/configure-aws-credentials@v6
+      if:
+        ${{ fromJson(steps.atmos-settings.outputs.settings).aws-region != '' &&
         fromJson(steps.atmos-settings.outputs.settings).aws-region != 'null' &&
         fromJson(steps.atmos-settings.outputs.settings).terraform-apply-role != '' &&
         fromJson(steps.atmos-settings.outputs.settings).terraform-apply-role != 'null' }}
@@ -355,7 +358,7 @@ runs:
 
     - name: Cache .terraform
       id: cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       if: env.ACTIONS_ENABLED == 'true'
       with:
         path: |
@@ -423,7 +426,7 @@ runs:
             --new ${{ steps.vars.outputs.renewed_plan_filename }} \
             --skip-init \
           > ${TERRAFORM_PLAN_DIFF_OUTPUT_FILE}
-          
+
           PLAN_CHANGED=$?
         fi
 
@@ -438,7 +441,7 @@ runs:
           sed -i -e "/{{DIFF}}/ {r ${TERRAFORM_PLAN_DIFF_OUTPUT_FILE}" -e 'd}' ./atmos-apply-summary.md
           cat ./atmos-apply-summary.md >> $GITHUB_STEP_SUMMARY
 
-          exit 1 
+          exit 1
         fi
 
     - name: Determine Plan File
@@ -560,11 +563,11 @@ runs:
             --planfile ${{ steps.plan-file.outputs.plan_filename }} \
             ${SKIP_INIT_FLAG} \
         &> ${TERRAFORM_OUTPUT_FILE}
-        
+
         TERRAFORM_RESULT=$?
 
         set -e
-                
+
         cat "${TERRAFORM_OUTPUT_FILE}"
         atmos terraform output ${{ inputs.component }} \
           --stack ${{ inputs.stack }} \
@@ -572,17 +575,17 @@ runs:
           --skip-init -- -json -compact-warnings -no-color  | \
           grep -v 'Switched to workspace' | \
           awk '$1~/^Warnings:$/ {exit} {print}' | \
-          grep -v 'WARN detected' 1> ${{ steps.vars.outputs.component_path }}/output_values.json        
+          grep -v 'WARN detected' 1> ${{ steps.vars.outputs.component_path }}/output_values.json
 
         cd ${{ steps.vars.outputs.component_path }}
         terraform-docs -c ${GITHUB_ACTION_PATH}/config/tfdocs-config.yaml --output-file ${GITHUB_WORKSPACE}/atmos-apply-summary.md ./
         cd -
-        
+
         sed -i "s#\`<sensitive>\`#![Sensitive](https://img.shields.io/badge/sensitive-c40000?style=for-the-badge)#g" ${GITHUB_WORKSPACE}/atmos-apply-summary.md
         sed -i "s#\`\"#\`#g" ${GITHUB_WORKSPACE}/atmos-apply-summary.md
         sed -i "s#\"\`#\`#g" ${GITHUB_WORKSPACE}/atmos-apply-summary.md
         sed -i "s#|--#|:-#g" ${GITHUB_WORKSPACE}/atmos-apply-summary.md
-        
+
         cat "${GITHUB_WORKSPACE}/atmos-apply-summary.md" >> $GITHUB_STEP_SUMMARY
 
         if [[ "${TERRAFORM_RESULT}" == "0" ]]; then
@@ -597,5 +600,5 @@ runs:
         echo "[Job](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> "${GITHUB_WORKSPACE}/atmos-apply-summary.md"
 
         rm -f ${TERRAFORM_OUTPUT_FILE}
-        
+
         exit $TERRAFORM_RESULT
