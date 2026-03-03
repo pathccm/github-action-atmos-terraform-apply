@@ -294,6 +294,7 @@ runs:
         output-env-credentials: false
 
     - name: Retrieve Plan
+      id: retrieve-plan
       if: ${{ env.ACTIONS_ENABLED == 'true' && inputs.plan-storage == 'true'}}
       uses: pathccm/github-action-terraform-plan-storage@main
       continue-on-error: true
@@ -415,7 +416,7 @@ runs:
 
         TERRAFORM_PLAN_DIFF_OUTPUT_FILE="./terraform-${GITHUB_RUN_ID}-plan-diff-output.txt"
 
-        if [[ "${{ inputs.plan-storage }}" == "true" ]]; then
+        if [[ "${{ inputs.plan-storage }}" == "true" && "${{ steps.retrieve-plan.outcome }}" == "success" ]]; then
 
           atmos terraform plan-diff ${{ inputs.component }} \
             --stack ${{ inputs.stack }} \
@@ -428,6 +429,9 @@ runs:
           > ${TERRAFORM_PLAN_DIFF_OUTPUT_FILE}
 
           PLAN_CHANGED=$?
+        elif [[ "${{ inputs.plan-storage }}" == "true" ]]; then
+          echo "::warning::No stored plan found for SHA ${{ inputs.sha }}. Skipping plan-diff and applying fresh plan."
+          PLAN_CHANGED=0
         fi
 
         if [[ "${PLAN_CHANGED}" == "0" ]]; then
